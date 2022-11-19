@@ -3,6 +3,8 @@
 
 module Main where
 
+import           Control.Applicative    (Alternative)
+import           Control.Monad          (guard)
 import           Data
 import           Data.Maybe             (fromMaybe)
 import           Database.HDBC          (IConnection (disconnect, prepare),
@@ -14,6 +16,7 @@ import           DoIO                   (askWhatToAdd, errNoSuchCmd, prompt,
 import           ProjConfig             (musicDBConn)
 import           System.Environment     (getArgs)
 import           Text.Printf            (printf)
+import           Util
 
 main :: IO ()
 main = do args <- getArgs
@@ -40,6 +43,7 @@ doAddArtist = undefined
 
 doAddSong :: IO ()
 doAddSong = do songName <- prompt "Name of song: "
+               reqNonEmpty songName
                artistID <- prompt "ID of the artist: "
                showArtistTable <- if artistID == "" then Just <$> prompt "Show artist table? [y/n] " else return Nothing
                case showArtistTable of
@@ -51,7 +55,16 @@ doAddSong = do songName <- prompt "Name of song: "
                  Just _ -> putStrLn "I cannot read this but I guess you want to decline."
                  Nothing -> return ()
                reArtistID <- prompt "What's the ID now? "
+               reqNonEmpty reArtistID
                artistDisp <- prompt "Name of artist in display: "
+               reqNonEmpty artistDisp
+               sourceURL <- prompt "[Optional] URL link to the source: "
+               filename <- prompt "[Optional] Desired filename for the audio file: "
+               let song = Song { songName=songName, artistDisp=artistDisp, sourceURL=strToMaybe sourceURL, filename=strToMaybe filename }
+               conn <- musicDBConn
+               addSong song conn
+               commit conn
+               disconnect conn
                putStrLn (printf "Added new song: '%s' by %s" songName artistDisp)
                return ()
 
