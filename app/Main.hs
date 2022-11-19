@@ -35,11 +35,32 @@ addX = \case "song"   -> doAddSong
              "album"  -> doAddAlbum
              _        -> errNoSuchCmd
 
+doAddGenre :: IO ()
+doAddGenre = do genreName <- prompt "Genre name: "
+                reqNonEmpty genreName
+                let genre = Genre genreName
+                conn <- musicDBConn
+                addGenre genre conn
+                commit conn
+                disconnect conn
+
 doAddAlbum :: IO ()
-doAddAlbum = undefined
+doAddAlbum = do albumName <- prompt "Name of album: "
+                reqNonEmpty albumName
+                let album = Album albumName
+                conn <- musicDBConn
+                addAlbum album conn
+                commit conn
+                disconnect conn
 
 doAddArtist :: IO ()
-doAddArtist = undefined
+doAddArtist = do artistName <- prompt "Name of artist: "
+                 reqNonEmpty artistName
+                 let artist = Artist { primaryName = artistName }
+                 conn <- musicDBConn
+                 addArtist artist conn
+                 commit conn
+                 disconnect conn
 
 doAddSong :: IO ()
 doAddSong = do songName <- prompt "Name of song: "
@@ -83,3 +104,17 @@ addSong (Song {..}) conn = do stmt <- prepare conn "INSERT INTO song (song_name,
                               execute stmt [toSql songName, toSql artistDisp, maybe SqlNull toSql sourceURL, maybe SqlNull toSql filename]
                               return ()
 
+addAlbum :: IConnection conn => Album -> conn -> IO ()
+addAlbum (Album {..}) conn = do stmt <- prepare conn "INSERT INTO album (album_name) VALUES (?)"
+                                execute stmt [toSql albumName]
+                                return ()
+
+addArtist :: IConnection conn => Artist -> conn -> IO ()
+addArtist (Artist {..}) conn = do stmt <- prepare conn "INSERT INTO artist (artist_name) VALUES (?)"
+                                  execute stmt [toSql primaryName]
+                                  return ()
+
+addGenre :: IConnection conn => Genre -> conn -> IO ()
+addGenre (Genre {..}) conn = do stmt <- prepare conn "INSERT INTO genre (genre_name) VALUES (?)"
+                                execute stmt [toSql genreName]
+                                return ()
