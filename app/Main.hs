@@ -29,7 +29,11 @@ processCmd = \case []         -> putHelp
 addX :: String -> IO ()
 addX = \case "song"   -> doAddSong
              "artist" -> doAddArtist
+             "album"  -> doAddAlbum
              _        -> errNoSuchCmd
+
+doAddAlbum :: IO ()
+doAddAlbum = undefined
 
 doAddArtist :: IO ()
 doAddArtist = undefined
