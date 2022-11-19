@@ -6,7 +6,7 @@ module Main where
 import           Control.Applicative    (Alternative)
 import           Control.Monad          (guard)
 import           Data
-import           Data.Maybe             (fromMaybe)
+import           Data.Maybe             (fromMaybe, isJust, isNothing)
 import           Database.HDBC          (IConnection (disconnect, prepare),
                                          Statement (execute), commit, fromSql,
                                          quickQuery', toSql)
@@ -54,8 +54,8 @@ doAddSong = do songName <- prompt "Name of song: "
                  Just "N" -> return ()
                  Just _ -> putStrLn "I cannot read this but I guess you want to decline."
                  Nothing -> return ()
-               reArtistID <- prompt "What's the ID now? "
-               reqNonEmpty reArtistID
+               reArtistID <- if artistID == "" then Just <$> prompt "What's the ID now? " else return Nothing
+               guard $ isNothing reArtistID && artistID /= "" || isJust reArtistID && reArtistID /= Just "" && artistID == ""
                artistDisp <- prompt "Name of artist in display: "
                reqNonEmpty artistDisp
                sourceURL <- prompt "[Optional] URL link to the source: "
